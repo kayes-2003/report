@@ -1,0 +1,1828 @@
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\hp\OneDrive\Documents\ncd_bmiz_log.log
+  log type:  text
+ opened on:   2 Jul 2026, 09:34:32
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. *------------------------------------------------------------------
+. use "C:\Users\hp\Desktop\REPORT WRITTING\datasets\BDIR81FL.DTA", clear
+
+. di as result "Raw N = " _N
+Raw N = 30078
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. drop v456 v176 pidxb_20
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. keep hw73_1 v024 v025 v106 v119 v121 v151 v171a v190 v501 v714a v745b v002
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. di as result "Variables kept: " `: word count `=r(k)''
+Variables kept: 1
+
+. di as result "Observations  : " _N
+Observations  : 30078
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. rename v024  division
+
+. rename v025  residence
+
+. rename v106  education
+
+. rename v119  electricity
+
+. rename v121  television
+
+. rename v151  sexhead
+
+. rename v171a internet
+
+. rename v190  wealth
+
+. rename v501  marital
+
+. rename v714a employed
+
+. rename v745b land
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. recode hw73_1 (9996/9999 = .), gen(bmiz_raw)
+(10 differences between hw73_1 and bmiz_raw)
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. gen bmiz = bmiz_raw / 100
+(26,413 missing values generated)
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * 3c. Drop implausible values (outside ±6 SD)
+. replace bmiz = . if bmiz < -6 | bmiz > 6
+(0 real changes made)
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * 3d. Create BINARY dependent variable for logistic regression
+. *     WHO definition: BMI-Z > 2 SD = overweight/obese
+. gen     high_bmiz = 0 if bmiz != .
+(26,413 missing values generated)
+
+. replace high_bmiz = 1 if bmiz > 2 & bmiz != .
+(71 real changes made)
+
+. 
+. label define bmiz_lbl 0 "Normal/Low BMI-Z (≤2 SD)" 1 "High BMI-Z (>2 SD, overweight/obese)"
+
+. label values high_bmiz bmiz_lbl
+
+. label variable high_bmiz "High BMI z-score (>2 SD) — overweight/obesity proxy"
+
+. label variable bmiz      "BMI z-score (WHO, new) — from hw73_1"
+
+. 
+. * 3e. Verify — must show non-missing values
+. di as result "--- high_bmiz distribution (check for non-missing) ---"
+--- high_bmiz distribution (check for non-missing) ---
+
+. tab high_bmiz, missing
+
+          High BMI z-score (>2 SD) — |
+            overweight/obesity proxy |      Freq.     Percent        Cum.
+-------------------------------------+-----------------------------------
+            Normal/Low BMI-Z (≤2 SD) |      3,594       11.95       11.95
+High BMI-Z (>2 SD, overweight/obese) |         71        0.24       12.18
+                                   . |     26,413       87.82      100.00
+-------------------------------------+-----------------------------------
+                               Total |     30,078      100.00
+
+. summarize bmiz, detail
+
+           BMI z-score (WHO, new) — from hw73_1
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%        -3.49          -4.59
+ 5%         -2.4          -4.56
+10%        -2.01          -4.51       Obs               3,665
+25%        -1.38           -4.5       Sum of wgt.       3,665
+
+50%         -.69                      Mean          -.6508622
+                        Largest       Std. dev.      1.154187
+75%          .02           4.55
+90%           .8           4.71       Variance       1.332147
+95%         1.27           4.75       Skewness       .2934724
+99%         2.45           4.93       Kurtosis       4.149879
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * SECTION 4 — CLEAN INDEPENDENT VARIABLES
+. *             Recode sentinel/don't-know codes to missing
+. *------------------------------------------------------------------
+. * Education (v106): 0=none,1=primary,2=secondary,3=higher; 8,9=missing
+. recode education (8=.) (9=.)
+(0 changes made to education)
+
+. 
+. * Electricity (v119): 0=no,1=yes in BDHS; max=7 suggests sentinel codes
+. recode electricity (7=.) (8=.) (9=.)
+(2130 changes made to electricity)
+
+. 
+. * Television (v121): same structure
+. recode television (7=.) (8=.) (9=.)
+(2130 changes made to television)
+
+. 
+. * Sex of HH head (v151): 1=male,2=female; 9=missing
+. recode sexhead (9=.)
+(0 changes made to sexhead)
+
+. 
+. * Internet (v171a): 0=no,1=yes,2=yes(both); 8,9=missing
+. recode internet (8=.) (9=.)
+(0 changes made to internet)
+
+. 
+. * Wealth (v190): 1-5 scale; no missing expected
+. recode wealth (8=.) (9=.)
+(0 changes made to wealth)
+
+. 
+. * Marital status (v501): 0=never,1=married,2=living together,
+. *                         3=widowed,4=divorced,5=no longer living together
+. recode marital (8=.) (9=.)
+(0 changes made to marital)
+
+. 
+. * Employed (v714a): 0=no,1=yes; 8,9=missing
+. recode employed (8=.) (9=.)
+(0 changes made to employed)
+
+. 
+. * Land (v745b): 0-5 categories; 8,9=missing
+. recode land (8=.) (9=.)
+(0 changes made to land)
+
+. 
+. *------------------------------------------------------------------
+. * SECTION 5 — LEVEL CHECK: verify no stray codes outside range
+. *------------------------------------------------------------------
+. di as result "=== LEVEL CHECK — inspect each variable below ==="
+=== LEVEL CHECK — inspect each variable below ===
+
+. foreach var in high_bmiz division residence education electricity ///
+>                television sexhead internet wealth marital employed land {
+  2.     di as result "--- `var' ---"
+  3.     tab `var', missing
+  4. }
+--- high_bmiz ---
+
+          High BMI z-score (>2 SD) — |
+            overweight/obesity proxy |      Freq.     Percent        Cum.
+-------------------------------------+-----------------------------------
+            Normal/Low BMI-Z (≤2 SD) |      3,594       11.95       11.95
+High BMI-Z (>2 SD, overweight/obese) |         71        0.24       12.18
+                                   . |     26,413       87.82      100.00
+-------------------------------------+-----------------------------------
+                               Total |     30,078      100.00
+--- division ---
+
+   division |      Freq.     Percent        Cum.
+------------+-----------------------------------
+   barishal |      3,232       10.75       10.75
+ chattogram |      4,461       14.83       25.58
+      dhaka |      4,554       15.14       40.72
+     khulna |      3,928       13.06       53.78
+ mymensingh |      3,255       10.82       64.60
+   rajshahi |      3,816       12.69       77.29
+    rangpur |      3,624       12.05       89.33
+     sylhet |      3,208       10.67      100.00
+------------+-----------------------------------
+      Total |     30,078      100.00
+--- residence ---
+
+    type of |
+   place of |
+  residence |      Freq.     Percent        Cum.
+------------+-----------------------------------
+      urban |     10,571       35.15       35.15
+      rural |     19,507       64.85      100.00
+------------+-----------------------------------
+      Total |     30,078      100.00
+--- education ---
+
+     highest |
+ educational |
+       level |      Freq.     Percent        Cum.
+-------------+-----------------------------------
+no education |      4,167       13.85       13.85
+     primary |      7,857       26.12       39.98
+   secondary |     13,613       45.26       85.24
+      higher |      4,441       14.76      100.00
+-------------+-----------------------------------
+       Total |     30,078      100.00
+--- electricity ---
+
+       household has: |
+          electricity |      Freq.     Percent        Cum.
+----------------------+-----------------------------------
+                   no |        402        1.34        1.34
+                  yes |     27,546       91.58       92.92
+                    . |      2,130        7.08      100.00
+----------------------+-----------------------------------
+                Total |     30,078      100.00
+--- television ---
+
+       household has: |
+           television |      Freq.     Percent        Cum.
+----------------------+-----------------------------------
+                   no |     12,969       43.12       43.12
+                  yes |     14,979       49.80       92.92
+                    . |      2,130        7.08      100.00
+----------------------+-----------------------------------
+                Total |     30,078      100.00
+--- sexhead ---
+
+     sex of |
+  household |
+       head |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       male |     25,813       85.82       85.82
+     female |      4,265       14.18      100.00
+------------+-----------------------------------
+      Total |     30,078      100.00
+--- internet ---
+
+           use of internet |      Freq.     Percent        Cum.
+---------------------------+-----------------------------------
+                     never |     14,168       47.10       47.10
+       yes, last 12 months |      5,699       18.95       66.05
+yes, before last 12 months |        120        0.40       66.45
+                         . |     10,091       33.55      100.00
+---------------------------+-----------------------------------
+                     Total |     30,078      100.00
+--- wealth ---
+
+     wealth |
+      index |
+   combined |      Freq.     Percent        Cum.
+------------+-----------------------------------
+    poorest |      5,559       18.48       18.48
+     poorer |      5,855       19.47       37.95
+     middle |      5,926       19.70       57.65
+     richer |      6,168       20.51       78.16
+    richest |      6,570       21.84      100.00
+------------+-----------------------------------
+      Total |     30,078      100.00
+--- marital ---
+
+             current marital status |      Freq.     Percent        Cum.
+------------------------------------+-----------------------------------
+                            married |     28,537       94.88       94.88
+                            widowed |        866        2.88       97.76
+                           divorced |        413        1.37       99.13
+no longer living together/separated |        262        0.87      100.00
+------------------------------------+-----------------------------------
+                              Total |     30,078      100.00
+--- employed ---
+
+ respondent |
+ has a job, |
+        but |
+  currently |
+     absent |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         no |     13,812       45.92       45.92
+        yes |         52        0.17       46.09
+          . |     16,214       53.91      100.00
+------------+-----------------------------------
+      Total |     30,078      100.00
+--- land ---
+
+             owns land alone or jointly |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                           does not own |     19,088       63.46       63.46
+                             alone only |        641        2.13       65.59
+      jointly with husband/partner only |        159        0.53       66.12
+         jointly with someone else only |         48        0.16       66.28
+jointly with husband/partner and someon |         27        0.09       66.37
+                 both alone and jointly |         24        0.08       66.45
+                                      . |     10,091       33.55      100.00
+----------------------------------------+-----------------------------------
+                                  Total |     30,078      100.00
+
+. 
+. *------------------------------------------------------------------
+. * SECTION 6 — DUPLICATE CHECK
+. *------------------------------------------------------------------
+. duplicates report v002
+
+Duplicates in terms of v002
+
+--------------------------------------
+   Copies | Observations       Surplus
+----------+---------------------------
+        1 |           14             0
+        2 |           16             8
+        3 |           12             8
+        5 |            5             4
+        6 |           24            20
+        8 |           40            35
+        9 |           45            40
+       10 |           10             9
+       11 |           22            20
+       14 |           14            13
+       17 |           17            16
+       18 |           54            51
+       21 |           21            20
+       22 |           44            42
+       24 |           24            23
+       25 |           50            48
+       26 |           26            25
+       28 |           28            27
+       31 |           62            60
+       32 |           32            31
+       38 |           38            37
+       42 |           42            41
+       43 |          129           126
+       47 |           47            46
+       50 |           50            49
+       51 |           51            50
+       56 |           56            55
+       57 |          114           112
+       58 |          116           114
+       65 |          130           128
+       70 |          140           138
+       80 |           80            79
+       86 |           86            85
+       87 |           87            86
+       88 |           88            87
+       92 |           92            91
+       93 |          186           184
+       97 |          194           192
+      100 |          100            99
+      108 |          108           107
+      109 |          109           108
+      112 |          112           111
+      116 |          116           115
+      119 |          119           118
+      121 |          242           240
+      129 |          129           128
+      134 |          134           133
+      138 |          138           137
+      142 |          142           141
+      151 |          151           150
+      155 |          155           154
+      157 |          157           156
+      159 |          159           158
+      168 |          168           167
+      170 |          340           338
+      179 |          179           178
+      184 |          184           183
+      185 |          185           184
+      186 |          186           185
+      187 |          187           186
+      190 |          190           189
+      191 |          191           190
+      197 |          394           392
+      200 |          200           199
+      201 |          201           200
+      207 |          414           412
+      209 |          209           208
+      210 |          210           209
+      211 |          211           210
+      212 |          212           211
+      213 |          213           212
+      214 |          214           213
+      224 |          224           223
+      227 |          227           226
+      234 |          468           466
+      236 |          472           470
+      237 |          237           236
+      238 |          238           237
+      240 |          240           239
+      241 |          241           240
+      242 |          242           241
+      248 |          248           247
+      249 |          747           744
+      251 |          502           500
+      252 |          504           502
+      253 |          759           756
+      254 |          254           253
+      255 |          255           254
+      256 |          768           765
+      257 |          257           256
+      258 |          516           514
+      259 |          518           516
+      260 |          780           777
+      261 |          261           260
+      262 |          524           522
+      264 |          264           263
+      265 |          530           528
+      266 |         1064          1060
+      267 |          267           266
+      268 |          536           534
+      271 |         1084          1080
+      272 |          816           813
+      274 |          822           819
+      275 |          825           822
+      279 |          558           556
+      280 |          280           279
+      281 |          843           840
+      282 |          282           281
+      284 |          852           849
+      285 |          570           568
+      286 |          286           285
+      287 |          287           286
+      289 |          289           288
+      290 |          290           289
+      301 |          903           900
+      303 |          303           302
+--------------------------------------
+
+. * If cluster + line number also available: duplicates report v001 v002 v003
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * SECTION 7 — MISSING VALUE SUMMARY + GRAPH
+. *------------------------------------------------------------------
+. di as result "=== MISSING VALUE SUMMARY (full dataset, before lock) ==="
+=== MISSING VALUE SUMMARY (full dataset, before lock) ===
+
+. misstable summarize high_bmiz division residence education electricity ///
+>     television sexhead internet wealth marital employed land
+                                                               Obs<.
+                                                +------------------------------
+               |                                | Unique
+      Variable |     Obs=.     Obs>.     Obs<.  | values        Min         Max
+  -------------+--------------------------------+------------------------------
+     high_bmiz |    26,413               3,665  |      2          0           1
+   electricity |     2,130              27,948  |      2          0           1
+    television |     2,130              27,948  |      2          0           1
+      internet |    10,091              19,987  |      3          0           2
+      employed |    16,214              13,864  |      2          0           1
+          land |    10,091              19,987  |      6          0           5
+  -----------------------------------------------------------------------------
+
+. 
+. * Print % missing per variable
+. local varlist high_bmiz division residence education electricity ///
+>               television sexhead internet wealth marital employed land
+
+. quietly count
+
+. local totalN = r(N)
+
+. 
+. di as result "Variable       | Missing | Total  | % Missing"
+Variable       | Missing | Total  | % Missing
+
+. di as result "---------------|---------|--------|----------"
+---------------|---------|--------|----------
+
+. foreach v of local varlist {
+  2.     quietly count if missing(`v')
+  3.     local mis = r(N)
+  4.     local pct = string(round(100 * `mis' / `totalN', 0.1))
+  5.     di as result "  `v': `mis' / `totalN' (`pct'%)"
+  6. }
+  high_bmiz: 26413 / 30078 (87.8%)
+  division: 0 / 30078 (0%)
+  residence: 0 / 30078 (0%)
+  education: 0 / 30078 (0%)
+  electricity: 2130 / 30078 (7.1%)
+  television: 2130 / 30078 (7.1%)
+  sexhead: 0 / 30078 (0%)
+  internet: 10091 / 30078 (33.5%)
+  wealth: 0 / 30078 (0%)
+  marital: 0 / 30078 (0%)
+  employed: 16214 / 30078 (53.9%)
+  land: 10091 / 30078 (33.5%)
+
+. 
+. * Missing-% bar chart using postfile (robust method)
+. tempname mh
+
+. tempfile mdata
+
+. postfile `mh' str20 varname double pct_miss using `mdata', replace
+(file C:\Users\hp\AppData\Local\Temp\ST_402c_000001.tmp not found)
+
+. foreach v of local varlist {
+  2.     quietly count if missing(`v')
+  3.     post `mh' ("`v'") (round(100 * r(N) / `totalN', 0.01))
+  4. }
+
+. postclose `mh'
+
+. 
+. preserve
+
+.     use `mdata', clear
+
+.     graph hbar pct_miss, over(varname, sort(1) label(angle(45))) ///
+>         title("Percent missing by variable (before sample lock)") ///
+>         ytitle("% Missing") ///
+>         blabel(bar, format(%4.1f)) ///
+>         name(miss_pct_graph, replace)
+
+. restore
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * SECTION 8 — LOCK ANALYTIC SAMPLE
+. *             keep if physically removes all incomplete rows.
+. *             After this line, every command uses the same N.
+. *------------------------------------------------------------------
+. egen anysample = rowmiss(high_bmiz division residence education electricity ///
+>     television sexhead internet wealth marital employed land)
+
+. replace anysample = (anysample == 0)
+(30,078 real changes made)
+
+. 
+. di as result "Complete cases: " `=sum(anysample)' " / " _N
+Complete cases: 0 / 30078
+
+. 
+. keep if anysample == 1
+(27,629 observations deleted)
+
+. drop anysample
+
+. 
+. count
+  2,449
+
+. global FIXED_N = r(N)
+
+. di as result "================================================"
+================================================
+
+. di as result " LOCKED ANALYTIC SAMPLE N = $FIXED_N"
+ LOCKED ANALYTIC SAMPLE N = 2449
+
+. di as result " All tables, tests, models below use this N"
+ All tables, tests, models below use this N
+
+. di as result "================================================"
+================================================
+
+. 
+. * N-check program
+. capture program drop checkn
+
+. program define checkn
+  1.     if e(N) != $FIXED_N {
+  2.         di as error "*** N MISMATCH: got `=e(N)', expected $FIXED_N ***"
+  3.     }
+  4.     else {
+  5.         di as result "    N check PASS: `=e(N)' == $FIXED_N"
+  6.     }
+  7. end
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * SECTION 9 — UNIVARIATE ANALYSIS (N = $FIXED_N)
+. *------------------------------------------------------------------
+. di as result "=== UNIVARIATE ANALYSIS (N=$FIXED_N) ==="
+=== UNIVARIATE ANALYSIS (N=2449) ===
+
+. 
+. * 9a. Continuous DV: BMI z-score
+. summarize bmiz, detail
+
+           BMI z-score (WHO, new) — from hw73_1
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%        -3.42          -4.59
+ 5%        -2.42          -4.56
+10%           -2          -4.51       Obs               2,449
+25%        -1.37          -4.34       Sum of wgt.       2,449
+
+50%         -.67                      Mean           -.625145
+                        Largest       Std. dev.      1.164736
+75%          .06           4.55
+90%          .85           4.71       Variance        1.35661
+95%         1.33           4.75       Skewness       .3037091
+99%         2.43           4.93       Kurtosis         4.2076
+
+. 
+. histogram bmiz, normal ///
+>     title("BMI z-score distribution (N=$FIXED_N)") ///
+>     xtitle("BMI z-score (WHO)") ytitle("Density") ///
+>     name(hist_bmiz, replace)
+(bin=33, start=-4.5900002, width=.28848485)
+
+. 
+. * 9b. Binary DV: high_bmiz
+. tab high_bmiz
+
+          High BMI z-score (>2 SD) — |
+            overweight/obesity proxy |      Freq.     Percent        Cum.
+-------------------------------------+-----------------------------------
+            Normal/Low BMI-Z (≤2 SD) |      2,401       98.04       98.04
+High BMI-Z (>2 SD, overweight/obese) |         48        1.96      100.00
+-------------------------------------+-----------------------------------
+                               Total |      2,449      100.00
+
+. 
+. graph bar (percent), over(high_bmiz, label(angle(0))) ///
+>     title("High BMI-Z prevalence (N=$FIXED_N)") ///
+>     ytitle("Percent (%)") ///
+>     name(uni_bmiz, replace)
+
+. 
+. * 9c. Each IV: frequency + bar chart
+. foreach var in division residence education electricity television ///
+>                sexhead internet wealth marital employed land {
+  2.     di as result "--- Univariate: `var' ---"
+  3.     quietly count
+  4.     assert r(N) == $FIXED_N   // N check
+  5.     tab `var'
+  6. 
+.     graph bar (percent), over(`var', label(angle(45))) ///
+>         title("Distribution: `var' (N=$FIXED_N)") ///
+>         ytitle("Percent (%)") ///
+>         name(uni_`var', replace)
+  7. }
+--- Univariate: division ---
+
+   division |      Freq.     Percent        Cum.
+------------+-----------------------------------
+   barishal |        298       12.17       12.17
+ chattogram |        460       18.78       30.95
+      dhaka |        362       14.78       45.73
+     khulna |        247       10.09       55.82
+ mymensingh |        295       12.05       67.86
+   rajshahi |        211        8.62       76.48
+    rangpur |        253       10.33       86.81
+     sylhet |        323       13.19      100.00
+------------+-----------------------------------
+      Total |      2,449      100.00
+--- Univariate: residence ---
+
+    type of |
+   place of |
+  residence |      Freq.     Percent        Cum.
+------------+-----------------------------------
+      urban |        863       35.24       35.24
+      rural |      1,586       64.76      100.00
+------------+-----------------------------------
+      Total |      2,449      100.00
+--- Univariate: education ---
+
+     highest |
+ educational |
+       level |      Freq.     Percent        Cum.
+-------------+-----------------------------------
+no education |        137        5.59        5.59
+     primary |        557       22.74       28.34
+   secondary |      1,301       53.12       81.46
+      higher |        454       18.54      100.00
+-------------+-----------------------------------
+       Total |      2,449      100.00
+--- Univariate: electricity ---
+
+       household has: |
+          electricity |      Freq.     Percent        Cum.
+----------------------+-----------------------------------
+                   no |         29        1.18        1.18
+                  yes |      2,420       98.82      100.00
+----------------------+-----------------------------------
+                Total |      2,449      100.00
+--- Univariate: television ---
+
+       household has: |
+           television |      Freq.     Percent        Cum.
+----------------------+-----------------------------------
+                   no |      1,194       48.75       48.75
+                  yes |      1,255       51.25      100.00
+----------------------+-----------------------------------
+                Total |      2,449      100.00
+--- Univariate: sexhead ---
+
+     sex of |
+  household |
+       head |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       male |      2,140       87.38       87.38
+     female |        309       12.62      100.00
+------------+-----------------------------------
+      Total |      2,449      100.00
+--- Univariate: internet ---
+
+           use of internet |      Freq.     Percent        Cum.
+---------------------------+-----------------------------------
+                     never |      1,642       67.05       67.05
+       yes, last 12 months |        793       32.38       99.43
+yes, before last 12 months |         14        0.57      100.00
+---------------------------+-----------------------------------
+                     Total |      2,449      100.00
+--- Univariate: wealth ---
+
+     wealth |
+      index |
+   combined |      Freq.     Percent        Cum.
+------------+-----------------------------------
+    poorest |        479       19.56       19.56
+     poorer |        458       18.70       38.26
+     middle |        484       19.76       58.02
+     richer |        496       20.25       78.28
+    richest |        532       21.72      100.00
+------------+-----------------------------------
+      Total |      2,449      100.00
+--- Univariate: marital ---
+
+             current marital status |      Freq.     Percent        Cum.
+------------------------------------+-----------------------------------
+                            married |      2,423       98.94       98.94
+                            widowed |          8        0.33       99.27
+                           divorced |          7        0.29       99.55
+no longer living together/separated |         11        0.45      100.00
+------------------------------------+-----------------------------------
+                              Total |      2,449      100.00
+--- Univariate: employed ---
+
+ respondent |
+ has a job, |
+        but |
+  currently |
+     absent |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         no |      2,438       99.55       99.55
+        yes |         11        0.45      100.00
+------------+-----------------------------------
+      Total |      2,449      100.00
+--- Univariate: land ---
+
+             owns land alone or jointly |      Freq.     Percent        Cum.
+----------------------------------------+-----------------------------------
+                           does not own |      2,394       97.75       97.75
+                             alone only |         38        1.55       99.31
+      jointly with husband/partner only |          7        0.29       99.59
+         jointly with someone else only |          1        0.04       99.63
+jointly with husband/partner and someon |          5        0.20       99.84
+                 both alone and jointly |          4        0.16      100.00
+----------------------------------------+-----------------------------------
+                                  Total |      2,449      100.00
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. di as result "=== BIVARIATE ANALYSIS (N=$FIXED_N) ==="
+=== BIVARIATE ANALYSIS (N=2449) ===
+
+. 
+. foreach var in division residence education electricity television ///
+>                sexhead internet wealth marital employed land {
+  2.     di as result "--- Bivariate: high_bmiz x `var' ---"
+  3.     tab high_bmiz `var', row chi2
+  4.     quietly tab high_bmiz `var'
+  5.     assert r(N) == $FIXED_N   // N check
+  6. 
+.     graph bar (percent), over(high_bmiz) over(`var', label(angle(45))) ///
+>         title("High BMI-Z by `var' (N=$FIXED_N)") ///
+>         ytitle("Percent (%)") ///
+>         name(bi_`var', replace)
+  7. }
+--- Bivariate: high_bmiz x division ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |                                        division
+                proxy |  barishal  chattogra      dhaka     khulna  mymensing   rajshahi    rangpur     sylhet |     Total
+----------------------+----------------------------------------------------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |       290        452        355        244        289        205        246        320 |     2,401 
+                      |     12.08      18.83      14.79      10.16      12.04       8.54      10.25      13.33 |    100.00 
+----------------------+----------------------------------------------------------------------------------------+----------
+High BMI-Z (>2 SD, ov |         8          8          7          3          6          6          7          3 |        48 
+                      |     16.67      16.67      14.58       6.25      12.50      12.50      14.58       6.25 |    100.00 
+----------------------+----------------------------------------------------------------------------------------+----------
+                Total |       298        460        362        247        295        211        253        323 |     2,449 
+                      |     12.17      18.78      14.78      10.09      12.05       8.62      10.33      13.19 |    100.00 
+
+          Pearson chi2(7) =   5.1567   Pr = 0.641
+--- Bivariate: high_bmiz x residence ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |   type of place of
+   overweight/obesity |       residence
+                proxy |     urban      rural |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |       848      1,553 |     2,401 
+                      |     35.32      64.68 |    100.00 
+----------------------+----------------------+----------
+High BMI-Z (>2 SD, ov |        15         33 |        48 
+                      |     31.25      68.75 |    100.00 
+----------------------+----------------------+----------
+                Total |       863      1,586 |     2,449 
+                      |     35.24      64.76 |    100.00 
+
+          Pearson chi2(1) =   0.3414   Pr = 0.559
+--- Bivariate: high_bmiz x education ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |          highest educational level
+                proxy | no educat    primary  secondary     higher |     Total
+----------------------+--------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |       136        550      1,274        441 |     2,401 
+                      |      5.66      22.91      53.06      18.37 |    100.00 
+----------------------+--------------------------------------------+----------
+High BMI-Z (>2 SD, ov |         1          7         27         13 |        48 
+                      |      2.08      14.58      56.25      27.08 |    100.00 
+----------------------+--------------------------------------------+----------
+                Total |       137        557      1,301        454 |     2,449 
+                      |      5.59      22.74      53.12      18.54 |    100.00 
+
+          Pearson chi2(3) =   4.5308   Pr = 0.210
+--- Bivariate: high_bmiz x electricity ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |    household has:
+   overweight/obesity |      electricity
+                proxy |        no        yes |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |        28      2,373 |     2,401 
+                      |      1.17      98.83 |    100.00 
+----------------------+----------------------+----------
+High BMI-Z (>2 SD, ov |         1         47 |        48 
+                      |      2.08      97.92 |    100.00 
+----------------------+----------------------+----------
+                Total |        29      2,420 |     2,449 
+                      |      1.18      98.82 |    100.00 
+
+          Pearson chi2(1) =   0.3383   Pr = 0.561
+--- Bivariate: high_bmiz x television ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |    household has:
+   overweight/obesity |      television
+                proxy |        no        yes |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |     1,177      1,224 |     2,401 
+                      |     49.02      50.98 |    100.00 
+----------------------+----------------------+----------
+High BMI-Z (>2 SD, ov |        17         31 |        48 
+                      |     35.42      64.58 |    100.00 
+----------------------+----------------------+----------
+                Total |     1,194      1,255 |     2,449 
+                      |     48.75      51.25 |    100.00 
+
+          Pearson chi2(1) =   3.4861   Pr = 0.062
+--- Bivariate: high_bmiz x sexhead ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity | sex of household head
+                proxy |      male     female |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |     2,101        300 |     2,401 
+                      |     87.51      12.49 |    100.00 
+----------------------+----------------------+----------
+High BMI-Z (>2 SD, ov |        39          9 |        48 
+                      |     81.25      18.75 |    100.00 
+----------------------+----------------------+----------
+                Total |     2,140        309 |     2,449 
+                      |     87.38      12.62 |    100.00 
+
+          Pearson chi2(1) =   1.6701   Pr = 0.196
+--- Bivariate: high_bmiz x internet ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |         use of internet
+                proxy |     never  yes, last  yes, befo |     Total
+----------------------+---------------------------------+----------
+Normal/Low BMI-Z (≤2  |     1,619        768         14 |     2,401 
+                      |     67.43      31.99       0.58 |    100.00 
+----------------------+---------------------------------+----------
+High BMI-Z (>2 SD, ov |        23         25          0 |        48 
+                      |     47.92      52.08       0.00 |    100.00 
+----------------------+---------------------------------+----------
+                Total |     1,642        793         14 |     2,449 
+                      |     67.05      32.38       0.57 |    100.00 
+
+          Pearson chi2(2) =   8.8221   Pr = 0.012
+--- Bivariate: high_bmiz x wealth ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |                 wealth index combined
+                proxy |   poorest     poorer     middle     richer    richest |     Total
+----------------------+-------------------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |       471        451        476        484        519 |     2,401 
+                      |     19.62      18.78      19.83      20.16      21.62 |    100.00 
+----------------------+-------------------------------------------------------+----------
+High BMI-Z (>2 SD, ov |         8          7          8         12         13 |        48 
+                      |     16.67      14.58      16.67      25.00      27.08 |    100.00 
+----------------------+-------------------------------------------------------+----------
+                Total |       479        458        484        496        532 |     2,449 
+                      |     19.56      18.70      19.76      20.25      21.72 |    100.00 
+
+          Pearson chi2(4) =   2.0832   Pr = 0.720
+--- Bivariate: high_bmiz x marital ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |           current marital status
+                proxy |   married    widowed   divorced  no longer |     Total
+----------------------+--------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |     2,375          8          7         11 |     2,401 
+                      |     98.92       0.33       0.29       0.46 |    100.00 
+----------------------+--------------------------------------------+----------
+High BMI-Z (>2 SD, ov |        48          0          0          0 |        48 
+                      |    100.00       0.00       0.00       0.00 |    100.00 
+----------------------+--------------------------------------------+----------
+                Total |     2,423          8          7         11 |     2,449 
+                      |     98.94       0.33       0.29       0.45 |    100.00 
+
+          Pearson chi2(3) =   0.5254   Pr = 0.913
+--- Bivariate: high_bmiz x employed ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — | respondent has a job,
+   overweight/obesity | but currently absent
+                proxy |        no        yes |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |     2,390         11 |     2,401 
+                      |     99.54       0.46 |    100.00 
+----------------------+----------------------+----------
+High BMI-Z (>2 SD, ov |        48          0 |        48 
+                      |    100.00       0.00 |    100.00 
+----------------------+----------------------+----------
+                Total |     2,438         11 |     2,449 
+                      |     99.55       0.45 |    100.00 
+
+          Pearson chi2(1) =   0.2209   Pr = 0.638
+--- Bivariate: high_bmiz x land ---
+
++----------------+
+| Key            |
+|----------------|
+|   frequency    |
+| row percentage |
++----------------+
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |                    owns land alone or jointly
+                proxy | does not   alone onl  jointly w  jointly w  jointly w  both alon |     Total
+----------------------+------------------------------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |     2,347         38          7          1          5          3 |     2,401 
+                      |     97.75       1.58       0.29       0.04       0.21       0.12 |    100.00 
+----------------------+------------------------------------------------------------------+----------
+High BMI-Z (>2 SD, ov |        47          0          0          0          0          1 |        48 
+                      |     97.92       0.00       0.00       0.00       0.00       2.08 |    100.00 
+----------------------+------------------------------------------------------------------+----------
+                Total |     2,394         38          7          1          5          4 |     2,449 
+                      |     97.75       1.55       0.29       0.04       0.20       0.16 |    100.00 
+
+          Pearson chi2(5) =  12.0699   Pr = 0.034
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * SECTION 11 — CORRELATION: high_bmiz vs each IV + graphs
+. *------------------------------------------------------------------
+. di as result "=== CORRELATION (N=$FIXED_N) ==="
+=== CORRELATION (N=2449) ===
+
+. 
+. quietly count
+
+. assert r(N) == $FIXED_N
+
+. pwcorr high_bmiz division residence education electricity television ///
+>        sexhead internet wealth marital employed land, sig star(.05)
+
+             | high_b~z division reside~e educat~n electr~y televi~n  sexhead
+-------------+---------------------------------------------------------------
+   high_bmiz |   1.0000 
+             |
+             |
+    division |  -0.0096   1.0000 
+             |   0.6348
+             |
+   residence |   0.0118   0.1061*  1.0000 
+             |   0.5592   0.0000
+             |
+   education |   0.0429* -0.0749* -0.1319*  1.0000 
+             |   0.0340   0.0002   0.0000
+             |
+ electricity |  -0.0118   0.0372  -0.0254   0.0604*  1.0000 
+             |   0.5610   0.0654   0.2082   0.0028
+             |
+  television |   0.0377  -0.0229  -0.2441*  0.2193*  0.1047*  1.0000 
+             |   0.0619   0.2574   0.0000   0.0000   0.0000
+             |
+     sexhead |   0.0261  -0.0842*  0.0563* -0.0038  -0.0039  -0.0230   1.0000 
+             |   0.1964   0.0000   0.0053   0.8501   0.8480   0.2552
+             |
+    internet |   0.0542* -0.0826* -0.1460*  0.3345*  0.0524*  0.1794*  0.1306*
+             |   0.0073   0.0000   0.0000   0.0000   0.0095   0.0000   0.0000
+             |
+      wealth |   0.0251  -0.0614* -0.3924*  0.4247*  0.1129*  0.4482*  0.0602*
+             |   0.2138   0.0024   0.0000   0.0000   0.0000   0.0000   0.0029
+             |
+     marital |  -0.0141   0.0076  -0.0089  -0.0607* -0.0689* -0.0185   0.0772*
+             |   0.4846   0.7060   0.6589   0.0026   0.0006   0.3593   0.0001
+             |
+    employed |  -0.0095  -0.0148  -0.0271  -0.0180   0.0074   0.0044  -0.0071 
+             |   0.6385   0.4637   0.1793   0.3735   0.7161   0.8264   0.7242
+             |
+        land |   0.0289  -0.0142  -0.0094   0.0140   0.0133   0.0263   0.0001 
+             |   0.1534   0.4828   0.6419   0.4873   0.5120   0.1931   0.9980
+             |
+
+             | internet   wealth  marital employed     land
+-------------+---------------------------------------------
+    internet |   1.0000 
+             |
+             |
+      wealth |   0.4218*  1.0000 
+             |   0.0000
+             |
+     marital |  -0.0157  -0.0421*  1.0000 
+             |   0.4378   0.0370
+             |
+    employed |   0.0039  -0.0156  -0.0067   1.0000 
+             |   0.8455   0.4403   0.7399
+             |
+        land |  -0.0022   0.0584* -0.0121  -0.0081   1.0000 
+             |   0.9121   0.0038   0.5495   0.6874
+             |
+
+. 
+. foreach var in division residence education electricity television ///
+>                sexhead internet wealth marital employed land {
+  2.     di as result "--- Correlation: high_bmiz & `var' ---"
+  3.     pwcorr high_bmiz `var', sig
+  4.     quietly count
+  5.     assert r(N) == $FIXED_N
+  6. 
+.     twoway ///
+>         (scatter high_bmiz `var', jitter(4) msize(vtiny) mcolor(navy%40)) ///
+>         (lfit    high_bmiz `var', lcolor(maroon) lwidth(medthick)), ///
+>         title("High BMI-Z vs `var' (N=$FIXED_N)") ///
+>         ytitle("High BMI-Z (0/1)") xtitle("`var'") ///
+>         legend(label(1 "Observations") label(2 "Linear fit")) ///
+>         name(corr_`var', replace)
+  7. }
+--- Correlation: high_bmiz & division ---
+
+             | high_b~z division
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+    division |  -0.0096   1.0000 
+             |   0.6348
+             |
+--- Correlation: high_bmiz & residence ---
+
+             | high_b~z reside~e
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+   residence |   0.0118   1.0000 
+             |   0.5592
+             |
+--- Correlation: high_bmiz & education ---
+
+             | high_b~z educat~n
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+   education |   0.0429   1.0000 
+             |   0.0340
+             |
+--- Correlation: high_bmiz & electricity ---
+
+             | high_b~z electr~y
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+ electricity |  -0.0118   1.0000 
+             |   0.5610
+             |
+--- Correlation: high_bmiz & television ---
+
+             | high_b~z televi~n
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+  television |   0.0377   1.0000 
+             |   0.0619
+             |
+--- Correlation: high_bmiz & sexhead ---
+
+             | high_b~z  sexhead
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+     sexhead |   0.0261   1.0000 
+             |   0.1964
+             |
+--- Correlation: high_bmiz & internet ---
+
+             | high_b~z internet
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+    internet |   0.0542   1.0000 
+             |   0.0073
+             |
+--- Correlation: high_bmiz & wealth ---
+
+             | high_b~z   wealth
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+      wealth |   0.0251   1.0000 
+             |   0.2138
+             |
+--- Correlation: high_bmiz & marital ---
+
+             | high_b~z  marital
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+     marital |  -0.0141   1.0000 
+             |   0.4846
+             |
+--- Correlation: high_bmiz & employed ---
+
+             | high_b~z employed
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+    employed |  -0.0095   1.0000 
+             |   0.6385
+             |
+--- Correlation: high_bmiz & land ---
+
+             | high_b~z     land
+-------------+------------------
+   high_bmiz |   1.0000 
+             |
+             |
+        land |   0.0289   1.0000 
+             |   0.1534
+             |
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * SECTION 12 — LOGISTIC REGRESSION + CHI-SQUARE + P-VALUES
+. *------------------------------------------------------------------
+. di as result "=== LOGISTIC REGRESSION (N=$FIXED_N) ==="
+=== LOGISTIC REGRESSION (N=2449) ===
+
+. 
+. * 12a. Chi-square for each IV
+. foreach var in division residence education electricity television ///
+>                sexhead internet wealth marital employed land {
+  2.     di as result "--- Chi-square: high_bmiz x `var' ---"
+  3.     tab high_bmiz `var', chi2
+  4.     quietly tab high_bmiz `var'
+  5.     assert r(N) == $FIXED_N
+  6. }
+--- Chi-square: high_bmiz x division ---
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |                                        division
+                proxy |  barishal  chattogra      dhaka     khulna  mymensing   rajshahi    rangpur     sylhet |     Total
+----------------------+----------------------------------------------------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |       290        452        355        244        289        205        246        320 |     2,401 
+High BMI-Z (>2 SD, ov |         8          8          7          3          6          6          7          3 |        48 
+----------------------+----------------------------------------------------------------------------------------+----------
+                Total |       298        460        362        247        295        211        253        323 |     2,449 
+
+          Pearson chi2(7) =   5.1567   Pr = 0.641
+--- Chi-square: high_bmiz x residence ---
+
+ High BMI z-score (>2 |
+                SD) — |   type of place of
+   overweight/obesity |       residence
+                proxy |     urban      rural |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |       848      1,553 |     2,401 
+High BMI-Z (>2 SD, ov |        15         33 |        48 
+----------------------+----------------------+----------
+                Total |       863      1,586 |     2,449 
+
+          Pearson chi2(1) =   0.3414   Pr = 0.559
+--- Chi-square: high_bmiz x education ---
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |          highest educational level
+                proxy | no educat    primary  secondary     higher |     Total
+----------------------+--------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |       136        550      1,274        441 |     2,401 
+High BMI-Z (>2 SD, ov |         1          7         27         13 |        48 
+----------------------+--------------------------------------------+----------
+                Total |       137        557      1,301        454 |     2,449 
+
+          Pearson chi2(3) =   4.5308   Pr = 0.210
+--- Chi-square: high_bmiz x electricity ---
+
+ High BMI z-score (>2 |
+                SD) — |    household has:
+   overweight/obesity |      electricity
+                proxy |        no        yes |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |        28      2,373 |     2,401 
+High BMI-Z (>2 SD, ov |         1         47 |        48 
+----------------------+----------------------+----------
+                Total |        29      2,420 |     2,449 
+
+          Pearson chi2(1) =   0.3383   Pr = 0.561
+--- Chi-square: high_bmiz x television ---
+
+ High BMI z-score (>2 |
+                SD) — |    household has:
+   overweight/obesity |      television
+                proxy |        no        yes |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |     1,177      1,224 |     2,401 
+High BMI-Z (>2 SD, ov |        17         31 |        48 
+----------------------+----------------------+----------
+                Total |     1,194      1,255 |     2,449 
+
+          Pearson chi2(1) =   3.4861   Pr = 0.062
+--- Chi-square: high_bmiz x sexhead ---
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity | sex of household head
+                proxy |      male     female |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |     2,101        300 |     2,401 
+High BMI-Z (>2 SD, ov |        39          9 |        48 
+----------------------+----------------------+----------
+                Total |     2,140        309 |     2,449 
+
+          Pearson chi2(1) =   1.6701   Pr = 0.196
+--- Chi-square: high_bmiz x internet ---
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |         use of internet
+                proxy |     never  yes, last  yes, befo |     Total
+----------------------+---------------------------------+----------
+Normal/Low BMI-Z (≤2  |     1,619        768         14 |     2,401 
+High BMI-Z (>2 SD, ov |        23         25          0 |        48 
+----------------------+---------------------------------+----------
+                Total |     1,642        793         14 |     2,449 
+
+          Pearson chi2(2) =   8.8221   Pr = 0.012
+--- Chi-square: high_bmiz x wealth ---
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |                 wealth index combined
+                proxy |   poorest     poorer     middle     richer    richest |     Total
+----------------------+-------------------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |       471        451        476        484        519 |     2,401 
+High BMI-Z (>2 SD, ov |         8          7          8         12         13 |        48 
+----------------------+-------------------------------------------------------+----------
+                Total |       479        458        484        496        532 |     2,449 
+
+          Pearson chi2(4) =   2.0832   Pr = 0.720
+--- Chi-square: high_bmiz x marital ---
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |           current marital status
+                proxy |   married    widowed   divorced  no longer |     Total
+----------------------+--------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |     2,375          8          7         11 |     2,401 
+High BMI-Z (>2 SD, ov |        48          0          0          0 |        48 
+----------------------+--------------------------------------------+----------
+                Total |     2,423          8          7         11 |     2,449 
+
+          Pearson chi2(3) =   0.5254   Pr = 0.913
+--- Chi-square: high_bmiz x employed ---
+
+ High BMI z-score (>2 |
+                SD) — | respondent has a job,
+   overweight/obesity | but currently absent
+                proxy |        no        yes |     Total
+----------------------+----------------------+----------
+Normal/Low BMI-Z (≤2  |     2,390         11 |     2,401 
+High BMI-Z (>2 SD, ov |        48          0 |        48 
+----------------------+----------------------+----------
+                Total |     2,438         11 |     2,449 
+
+          Pearson chi2(1) =   0.2209   Pr = 0.638
+--- Chi-square: high_bmiz x land ---
+
+ High BMI z-score (>2 |
+                SD) — |
+   overweight/obesity |                    owns land alone or jointly
+                proxy | does not   alone onl  jointly w  jointly w  jointly w  both alon |     Total
+----------------------+------------------------------------------------------------------+----------
+Normal/Low BMI-Z (≤2  |     2,347         38          7          1          5          3 |     2,401 
+High BMI-Z (>2 SD, ov |        47          0          0          0          0          1 |        48 
+----------------------+------------------------------------------------------------------+----------
+                Total |     2,394         38          7          1          5          4 |     2,449 
+
+          Pearson chi2(5) =  12.0699   Pr = 0.034
+
+. 
+. * 12b. Bivariate (unadjusted) logistic models
+. di as result "--- Unadjusted bivariate logistic models ---"
+--- Unadjusted bivariate logistic models ---
+
+. foreach var in division residence education electricity television ///
+>                sexhead internet wealth marital employed land {
+  2.     di as result "--- Bivariate logistic: high_bmiz ~ `var' ---"
+  3.     logistic high_bmiz `var'
+  4.     checkn
+  5. }
+--- Bivariate logistic: high_bmiz ~ division ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   0.23
+                                                        Prob > chi2   = 0.6337
+Log likelihood = -236.16017                             Pseudo R2     = 0.0005
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    division |   .9704719   .0612505    -0.47   0.635     .8575513    1.098262
+       _cons |    .022649     .00671   -12.78   0.000     .0126728    .0404788
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+--- Bivariate logistic: high_bmiz ~ residence ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   0.35
+                                                        Prob > chi2   = 0.5554
+Log likelihood = -236.0999                              Pseudo R2     = 0.0007
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   residence |   1.201288   .3775808     0.58   0.560     .6487884    2.224288
+       _cons |   .0147248   .0080964    -7.67   0.000     .0050121    .0432592
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+--- Bivariate logistic: high_bmiz ~ education ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   4.71
+                                                        Prob > chi2   = 0.0300
+Log likelihood = -233.91799                             Pseudo R2     = 0.0100
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+   education |   1.528503   .3067475     2.11   0.034     1.031437    2.265111
+       _cons |   .0086836    .003838   -10.74   0.000     .0036516    .0206498
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+--- Bivariate logistic: high_bmiz ~ electricity ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   0.28
+                                                        Prob > chi2   = 0.5985
+Log likelihood = -236.1351                              Pseudo R2     = 0.0006
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+ electricity |   .5545635   .5702566    -0.57   0.566      .073903    4.161407
+       _cons |   .0357149   .0363468    -3.27   0.001     .0048594    .2624887
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+--- Bivariate logistic: high_bmiz ~ television ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   3.54
+                                                        Prob > chi2   = 0.0598
+Log likelihood = -234.50182                             Pseudo R2     = 0.0075
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+  television |   1.753508   .5340234     1.84   0.065     .9653343    3.185206
+       _cons |   .0144435   .0035283   -17.35   0.000     .0089483    .0233134
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+--- Bivariate logistic: high_bmiz ~ sexhead ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   1.49
+                                                        Prob > chi2   = 0.2226
+Log likelihood = -235.53012                             Pseudo R2     = 0.0031
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     sexhead |   1.616154   .6059207     1.28   0.200     .7750938    3.369854
+       _cons |   .0114857   .0053739    -9.55   0.000     .0045909    .0287354
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+--- Bivariate logistic: high_bmiz ~ internet ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   6.64
+                                                        Prob > chi2   = 0.0100
+Log likelihood = -232.95395                             Pseudo R2     = 0.0141
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    internet |   2.060862   .5657746     2.63   0.008     1.203278    3.529651
+       _cons |   .0147227   .0029953   -20.73   0.000     .0098813    .0219361
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+--- Bivariate logistic: high_bmiz ~ wealth ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   1.56
+                                                        Prob > chi2   = 0.2120
+Log likelihood = -235.49496                             Pseudo R2     = 0.0033
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+      wealth |   1.137215   .1179976     1.24   0.215     .9279442    1.393681
+       _cons |   .0132757   .0049503   -11.59   0.000     .0063923    .0275713
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+--- Bivariate logistic: high_bmiz ~ marital ---
+note: marital != 1 predicts failure perfectly;
+      marital omitted and 26 obs not used.
+
+
+Logistic regression                                    Number of obs =   2,423
+                                                       LR chi2(0)    =   -0.00
+                                                       Prob > chi2   =       .
+Log likelihood = -235.7563                             Pseudo R2     = -0.0000
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+     marital |          1  (omitted)
+       _cons |   .0202105   .0029465   -26.76   0.000     .0151873    .0268951
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+*** N MISMATCH: got 2423, expected 2449 ***
+--- Bivariate logistic: high_bmiz ~ employed ---
+note: employed != 0 predicts failure perfectly;
+      employed omitted and 11 obs not used.
+
+
+Logistic regression                                     Number of obs =  2,438
+                                                        LR chi2(0)    =   0.00
+                                                        Prob > chi2   =      .
+Log likelihood = -236.0555                              Pseudo R2     = 0.0000
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    employed |          1  (omitted)
+       _cons |   .0200837   .0029278   -26.81   0.000     .0150923    .0267258
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+*** N MISMATCH: got 2438, expected 2449 ***
+--- Bivariate logistic: high_bmiz ~ land ---
+
+Logistic regression                                     Number of obs =  2,449
+                                                        LR chi2(1)    =   1.26
+                                                        Prob > chi2   = 0.2609
+Log likelihood = -235.64167                             Pseudo R2     = 0.0027
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+        land |   1.401242   .3522812     1.34   0.180     .8560826    2.293563
+       _cons |   .0195663   .0028949   -26.59   0.000      .014641    .0261486
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+    N check PASS: 2449 == 2449
+
+. 
+. * 12c. Multivariable adjusted model — OR, 95% CI, p-value
+. di as result "--- Adjusted multivariable logistic model ---"
+--- Adjusted multivariable logistic model ---
+
+. logistic high_bmiz division residence education electricity television ///
+>          sexhead internet wealth marital employed land
+note: marital != 1 predicts failure perfectly;
+      marital omitted and 26 obs not used.
+
+note: employed != 0 predicts failure perfectly;
+      employed omitted and 11 obs not used.
+
+
+Logistic regression                                     Number of obs =  2,412
+                                                        LR chi2(9)    =  15.29
+                                                        Prob > chi2   = 0.0833
+Log likelihood = -227.89187                             Pseudo R2     = 0.0325
+
+------------------------------------------------------------------------------
+   high_bmiz | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    division |   .9895217     .06442    -0.16   0.871     .8709842    1.124192
+   residence |   1.459806   .5033025     1.10   0.273     .7427174     2.86924
+   education |   1.370208   .3143701     1.37   0.170     .8739631    2.148224
+ electricity |   .3412959   .3613101    -1.02   0.310     .0428562    2.717995
+  television |   1.757727   .5993713     1.65   0.098     .9009452    3.429293
+     sexhead |   1.484226   .5740146     1.02   0.307       .69551    3.167354
+    internet |   1.805982   .5734018     1.86   0.063     .9692945    3.364892
+      wealth |   .9265264   .1289891    -0.55   0.584     .7052699    1.217195
+     marital |          1  (omitted)
+    employed |          1  (omitted)
+        land |   1.460628   .3848231     1.44   0.150      .871522    2.447939
+       _cons |    .007747   .0106065    -3.55   0.000     .0005293    .1133767
+------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+
+. checkn
+*** N MISMATCH: got 2412, expected 2449 ***
+
+. 
+. * 12d. Log-odds form: coefficients + z-statistic + p-values
+. logit high_bmiz division residence education electricity television ///
+>       sexhead internet wealth marital employed land
+
+note: marital != 1 predicts failure perfectly;
+      marital omitted and 26 obs not used.
+
+note: employed != 0 predicts failure perfectly;
+      employed omitted and 11 obs not used.
+
+Iteration 0:   log likelihood = -235.53569  
+Iteration 1:   log likelihood =  -229.4873  
+Iteration 2:   log likelihood = -227.92685  
+Iteration 3:   log likelihood = -227.89189  
+Iteration 4:   log likelihood = -227.89187  
+
+Logistic regression                                     Number of obs =  2,412
+                                                        LR chi2(9)    =  15.29
+                                                        Prob > chi2   = 0.0833
+Log likelihood = -227.89187                             Pseudo R2     = 0.0325
+
+------------------------------------------------------------------------------
+   high_bmiz | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+    division |  -.0105336   .0651021    -0.16   0.871    -.1381314    .1170643
+   residence |   .3783038   .3447734     1.10   0.273    -.2974397    1.054047
+   education |   .3149622   .2294325     1.37   0.170    -.1347171    .7646416
+ electricity |  -1.075005   1.058642    -1.02   0.310    -3.149905    .9998944
+  television |   .5640217   .3409922     1.65   0.098    -.1043108    1.232354
+     sexhead |   .3948933   .3867434     1.02   0.307    -.3631099    1.152896
+    internet |   .5911045   .3175014     1.86   0.063    -.0311868    1.213396
+      wealth |  -.0763127   .1392179    -0.55   0.584    -.3491748    .1965494
+     marital |          0  (omitted)
+    employed |          0  (omitted)
+        land |   .3788662   .2634642     1.44   0.150    -.1375142    .8952465
+       _cons |  -4.860452   1.369113    -3.55   0.000    -7.543865    -2.17704
+------------------------------------------------------------------------------
+
+. checkn
+*** N MISMATCH: got 2412, expected 2449 ***
+
+. 
+. * 12e. Model diagnostics
+. estat gof                    // Hosmer-Lemeshow goodness of fit
+
+Goodness-of-fit test after logistic model
+Variable: high_bmiz
+
+      Number of observations =  2,412
+Number of covariate patterns =    889
+           Pearson chi2(879) = 863.03
+                 Prob > chi2 = 0.6433
+
+. estat classification         // Sensitivity, specificity, correctly classified
+
+Logistic model for high_bmiz
+
+              -------- True --------
+Classified |         D            ~D  |      Total
+-----------+--------------------------+-----------
+     +     |         0             0  |          0
+     -     |        48          2364  |       2412
+-----------+--------------------------+-----------
+   Total   |        48          2364  |       2412
+
+Classified + if predicted Pr(D) >= .5
+True D defined as high_bmiz != 0
+--------------------------------------------------
+Sensitivity                     Pr( +| D)    0.00%
+Specificity                     Pr( -|~D)  100.00%
+Positive predictive value       Pr( D| +)       .%
+Negative predictive value       Pr(~D| -)   98.01%
+--------------------------------------------------
+False + rate for true ~D        Pr( +|~D)    0.00%
+False - rate for true D         Pr( -| D)  100.00%
+False + rate for classified +   Pr(~D| +)       .%
+False - rate for classified -   Pr( D| -)    1.99%
+--------------------------------------------------
+Correctly classified                        98.01%
+--------------------------------------------------
+
+. test division residence education electricity television sexhead ///
+>      internet wealth marital employed land
+
+ ( 1)  [high_bmiz]division = 0
+ ( 2)  [high_bmiz]residence = 0
+ ( 3)  [high_bmiz]education = 0
+ ( 4)  [high_bmiz]electricity = 0
+ ( 5)  [high_bmiz]television = 0
+ ( 6)  [high_bmiz]sexhead = 0
+ ( 7)  [high_bmiz]internet = 0
+ ( 8)  [high_bmiz]wealth = 0
+ ( 9)  [high_bmiz]o.marital = 0
+ (10)  [high_bmiz]o.employed = 0
+ (11)  [high_bmiz]land = 0
+       Constraint 9 dropped
+       Constraint 10 dropped
+
+           chi2(  9) =   15.45
+         Prob > chi2 =    0.0792
+
+. 
+end of do-file
+
+. do "C:\Users\hp\AppData\Local\Temp\STD402c_000000.tmp"
+
+. * SECTION 13 — FINAL N AUDIT
+. *------------------------------------------------------------------
+. count
+  2,449
+
+. di as result "================================================"
+================================================
+
+. di as result " FINAL N in memory : `r(N)'"
+ FINAL N in memory : 2449
+
+. di as result " LOCKED N          : $FIXED_N"
+ LOCKED N          : 2449
+
+. if `r(N)' == $FIXED_N {
+.     di as result " AUDIT STATUS      : PASS — N consistent throughout"
+ AUDIT STATUS      : PASS — N consistent throughout
+. }
+
+. else {
+.     di as error  " AUDIT STATUS      : FAIL — N drifted, investigate"
+. }
+
+. di as result "================================================"
+================================================
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\hp\OneDrive\Documents\ncd_bmiz_log.log
+  log type:  text
+ closed on:   2 Jul 2026, 09:39:30
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
